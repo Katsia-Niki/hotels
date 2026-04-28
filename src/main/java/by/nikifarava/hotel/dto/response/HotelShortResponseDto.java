@@ -1,4 +1,4 @@
-package by.nikifarava.hotel.dto;
+package by.nikifarava.hotel.dto.response;
 
 public record HotelShortResponseDto(
         Long id,

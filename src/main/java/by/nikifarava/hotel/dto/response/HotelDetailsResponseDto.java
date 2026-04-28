@@ -1,4 +1,4 @@
-package by.nikifarava.hotel.dto;
+package by.nikifarava.hotel.dto.response;
 
 import java.util.List;
 
@@ -7,9 +7,9 @@ public record HotelDetailsResponseDto(
         String name,
         String description,
         String brand,
-        AddressDto address,
-        ContactDto contacts,
-        ArrivalTimeDto arrivalTime,
+        AddressResponseDto address,
+        ContactResponseDto contacts,
+        ArrivalTimeResponseDto arrivalTime,
         List<String> amenities
 ) {
 }

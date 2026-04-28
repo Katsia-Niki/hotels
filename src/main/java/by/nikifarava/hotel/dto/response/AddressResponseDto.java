@@ -1,6 +1,6 @@
-package by.nikifarava.hotel.dto;
+package by.nikifarava.hotel.dto.response;
 
-public record AddressDto(
+public record AddressResponseDto(
         String houseNumber,
         String street,
         String city,
