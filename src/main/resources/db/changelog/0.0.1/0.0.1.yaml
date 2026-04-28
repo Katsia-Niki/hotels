@@ -1,0 +1,248 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-hotels
+      author: k.nikifarava
+      changes:
+        - createTable:
+            tableName: hotels
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_hotels
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: CLOB
+              - column:
+                  name: brand
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: hotels
+            indexName: idx_hotels_brand
+            columns:
+              - column:
+                  name: brand
+
+  - changeSet:
+      id: 002-create-addresses
+      author: k.nikifarava
+      changes:
+        - createTable:
+            tableName: addresses
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_addresses
+              - column:
+                  name: hotel_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: house_number
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: street
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: city
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: country
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: post_code
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: addresses
+            baseColumnNames: hotel_id
+            referencedTableName: hotels
+            referencedColumnNames: id
+            constraintName: fk_addresses_hotel
+            onDelete: CASCADE
+        - createIndex:
+            tableName: addresses
+            indexName: idx_addresses_city
+            columns:
+              - column:
+                  name: city
+        - createIndex:
+            tableName: addresses
+            indexName: idx_addresses_country
+            columns:
+              - column:
+                  name: country
+
+  - changeSet:
+      id: 003-create-contacts
+      author: k.nikifarava
+      changes:
+        - createTable:
+            tableName: contacts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_contacts
+              - column:
+                  name: hotel_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: phone
+                  type: VARCHAR(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: contacts
+            baseColumnNames: hotel_id
+            referencedTableName: hotels
+            referencedColumnNames: id
+            constraintName: fk_contacts_hotel
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            tableName: contacts
+            columnNames: email
+            constraintName: uk_contacts_email
+
+  - changeSet:
+      id: 004-create-arrival-times
+      author: k.nikifarava
+      changes:
+        - createTable:
+            tableName: arrival_times
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_arrival_times
+              - column:
+                  name: hotel_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: check_in
+                  type: VARCHAR(5)
+                  defaultValue: "14:00"
+              - column:
+                  name: check_out
+                  type: VARCHAR(5)
+                  defaultValue: "12:00"
+        - addForeignKeyConstraint:
+            baseTableName: arrival_times
+            baseColumnNames: hotel_id
+            referencedTableName: hotels
+            referencedColumnNames: id
+            constraintName: fk_arrival_times_hotel
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 005-create-amenities
+      author: k.nikifarava
+      changes:
+        - createTable:
+            tableName: amenities
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_amenities
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: amenities
+            columnNames: name
+            constraintName: uk_amenities_name
+
+  - changeSet:
+      id: 006-create-hotel-amenities
+      author: k.nikifarava
+      changes:
+        - createTable:
+            tableName: hotel_amenities
+            columns:
+              - column:
+                  name: hotel_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amenity_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: hotel_amenities
+            columnNames: hotel_id, amenity_id
+            constraintName: pk_hotel_amenities
+        - addForeignKeyConstraint:
+            baseTableName: hotel_amenities
+            baseColumnNames: hotel_id
+            referencedTableName: hotels
+            referencedColumnNames: id
+            constraintName: fk_hotel_amenities_hotel
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: hotel_amenities
+            baseColumnNames: amenity_id
+            referencedTableName: amenities
+            referencedColumnNames: id
+            constraintName: fk_hotel_amenities_amenity
+            onDelete: CASCADE
+        - createIndex:
+            tableName: hotel_amenities
+            indexName: idx_hotel_amenities_amenity_id
+            columns:
+              - column:
+                  name: amenity_id
