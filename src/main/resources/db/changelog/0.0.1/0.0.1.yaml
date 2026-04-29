@@ -166,12 +166,12 @@ databaseChangeLog:
                     unique: true
               - column:
                   name: check_in
-                  type: VARCHAR(5)
-                  defaultValue: "14:00"
+                  type: TIME
+                  defaultValue: "14:00:00"
               - column:
                   name: check_out
-                  type: VARCHAR(5)
-                  defaultValue: "12:00"
+                  type: TIME
+                  defaultValue: "12:00:00"
         - addForeignKeyConstraint:
             baseTableName: arrival_times
             baseColumnNames: hotel_id

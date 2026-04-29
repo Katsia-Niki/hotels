@@ -1,10 +1,13 @@
 package by.nikifarava.hotel.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalTime;
 
 public record CreateHotelRequestDto(
         @NotBlank @Size(max = 255) String name,
@@ -30,8 +33,8 @@ public record CreateHotelRequestDto(
     }
 
     public record CreateArrivalTimeDto(
-            @Size(max = 5) String checkIn,
-            @Size(max = 5) String checkOut
-    ) {
+            @JsonFormat(pattern = "HH:mm") LocalTime checkIn,
+            @JsonFormat(pattern = "HH:mm") LocalTime checkOut
+    )  {
     }
 }

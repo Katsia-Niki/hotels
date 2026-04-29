@@ -3,6 +3,8 @@ package by.nikifarava.hotel.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalTime;
+
 @Entity
 @Table(name = "arrival_times")
 @Getter
@@ -21,9 +23,9 @@ public class ArrivalTime {
     @ToString.Exclude
     private Hotel hotel;
 
-    @Column(name = "check_in", length = 5)
-    private String checkIn;
+    @Column(name = "check_in")
+    private LocalTime checkIn;
 
-    @Column(name = "check_out", length = 5)
-    private String checkOut;
+    @Column(name = "check_out")
+    private LocalTime checkOut;
 }
