@@ -4,10 +4,7 @@ import by.nikifarava.hotel.dto.request.CreateHotelRequestDto;
 import by.nikifarava.hotel.dto.request.HotelSearchRequestDto;
 import by.nikifarava.hotel.dto.response.HotelDetailsResponseDto;
 import by.nikifarava.hotel.dto.response.HotelShortResponseDto;
-import by.nikifarava.hotel.entity.Address;
-import by.nikifarava.hotel.entity.ArrivalTime;
-import by.nikifarava.hotel.entity.Contact;
-import by.nikifarava.hotel.entity.Hotel;
+import by.nikifarava.hotel.entity.*;
 import by.nikifarava.hotel.mapper.HotelMapper;
 import by.nikifarava.hotel.repository.AddressRepository;
 import by.nikifarava.hotel.repository.AmenityRepository;
@@ -22,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -38,15 +36,53 @@ public class HotelService {
     private final AmenityRepository amenityRepository;
     private final HotelMapper hotelMapper;
 
-   
 
+    @Transactional
     public void addAmenities(Long id, List<String> amenities) {
-        //todo
+        Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Hotel not found"));
+
+        if (amenities == null || amenities.isEmpty()) return;
+
+        amenities.stream()
+                .flatMap(name -> Arrays.stream(name.split(",")))
+                .map(String::trim)
+                .filter(name -> !name.isBlank())
+                .map(String::toLowerCase)
+                .distinct()
+                .forEach(name -> {
+                    Amenity amenity = amenityRepository.findByNameIgnoreCase(name)
+                            .orElseGet(() -> amenityRepository.save(Amenity.builder().name(name).build()));
+
+                    if (!hotel.getAmenities().contains(amenity)) {
+                        hotel.getAmenities().add(amenity);
+                        amenity.getHotels().add(hotel);
+                    }
+                });
+
+        hotelRepository.save(hotel);
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Long> getHistogram(String param) {
-        //todo
-        return null;
+        String preparedParam = (param == null) ? "" : param.toLowerCase();
+        if (!HISTOGRAM_PARAMS.contains(preparedParam)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unsupported histogram parameters. Allowed parameters: " + HISTOGRAM_PARAMS
+            );
+        }
+
+        List<Object[]> rows = switch (preparedParam) {
+            case "brand" -> hotelRepository.countByBrand();
+            case "city" -> addressRepository.countByCity();
+            case "country" -> addressRepository.countByCountry();
+            case "amenities" -> amenityRepository.countByAmenityName();
+            default -> List.of();
+        };
+
+        return rows.stream().collect(Collectors
+                .toMap(r -> String.valueOf(r[0]), r -> ((Number) r[1]).longValue()));
     }
 
     @Transactional
@@ -96,14 +132,29 @@ public class HotelService {
     @Transactional(readOnly = true)
     public List<HotelShortResponseDto> search(HotelSearchRequestDto hotelDto) {
 
-        String name = hotelDto != null ? hotelDto.getName() : null;
-        String brand = hotelDto != null ? hotelDto.getBrand() : null;
-        String city = hotelDto != null ? hotelDto.getCity() : null;
-        String country = hotelDto != null ? hotelDto.getCountry() : null;
-        List<String> preparedAmenities = prepareAmenities(hotelDto != null ? hotelDto.getAmenities() : null);
-        List<Hotel> hotels = findHotelsByFirstMatch(name, brand, city, country, preparedAmenities);
+        if (hotelDto == null) {
+            return hotelMapper.toShortDtoList(hotelRepository.findAll());
+        }
+
+        String name = hotelDto.getName();
+        String brand = hotelDto.getBrand();
+        String city = hotelDto.getCity();
+        String country = hotelDto.getCountry();
+
+        List<String> amenities = Optional.ofNullable(hotelDto.getAmenities())
+                .orElse(List.of())
+                .stream()
+                .flatMap(s -> Arrays.stream(s.split(",")))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(String::toLowerCase)
+                .distinct()
+                .toList();
+
+        List<Hotel> hotels = findHotelsByFirstMatch(name, brand, city, country, amenities);
+
         hotels = hotels.stream()
-                .filter(hotel -> matchesSearchFilters(hotel, name, brand, city, country, preparedAmenities))
+                .filter(hotel -> matchesSearchFilters(hotel, name, brand, city, country, amenities))
                 .toList();
         return hotelMapper.toShortDtoList(hotels);
     }
@@ -121,49 +172,31 @@ public class HotelService {
         return hotelMapper.toShortDtoList(hotelRepository.findAllWithAddressAndContact());
     }
 
-    private List<String> prepareAmenities(List<String> amenities) {
-        if (amenities == null || amenities.isEmpty()) {
-            return List.of();
-        }
-        return amenities.stream()
-                .flatMap(value -> Arrays.stream(value.split(",")))
-                .map(String::trim)
-                .filter(this::hasText)
-                .map(String::toLowerCase)
-                .distinct()
-                .sorted()
-                .toList();
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
-    }
-
     private List<Hotel> findHotelsByFirstMatch(
             String name,
             String brand,
             String city,
             String country,
             List<String> preparedAmenities
-    ) {if (hasText(name) && hasText(brand)) {
+    ) {if (name != null && !name.isBlank() && brand != null && !brand.isBlank()) {
         return hotelRepository.findByNameContainingIgnoreCaseAndBrandContainingIgnoreCase(name.trim(), brand.trim());
     }
-        if (hasText(city) && hasText(country)) {
+        if (city != null && !city.isBlank() && country != null && !country.isBlank()) {
             return hotelRepository.findByAddress_CityContainingIgnoreCaseAndAddress_CountryContainingIgnoreCase(
                     city.trim(),
                     country.trim()
             );
         }
-        if (hasText(name)) {
+        if (name != null && !name.isBlank()) {
             return hotelRepository.findByNameContainingIgnoreCase(name.trim());
         }
-        if (hasText(brand)) {
+        if (brand != null && !brand.isBlank()) {
             return hotelRepository.findByBrandContainingIgnoreCase(brand.trim());
         }
-        if (hasText(city)) {
+        if (city != null && !city.isBlank()) {
             return hotelRepository.findByAddress_CityContainingIgnoreCase(city.trim());
         }
-        if (hasText(country)) {
+        if (country != null && !country.isBlank()) {
             return hotelRepository.findByAddress_CountryContainingIgnoreCase(country.trim());
         }
         if (!preparedAmenities.isEmpty()) {
@@ -179,16 +212,16 @@ public class HotelService {
             String city,
             String country,
             List<String> preparedAmenities
-    ) {if (hasText(name) && doesNotContainIgnoreCase(hotel.getName(), name)) {
+    ) {if (name != null && !name.isBlank() && doesNotContainIgnoreCase(hotel.getName(), name)) {
         return false;
     }
-        if (hasText(brand) && doesNotContainIgnoreCase(hotel.getBrand(), brand)) {
+        if (brand != null && !brand.isBlank() && doesNotContainIgnoreCase(hotel.getBrand(), brand)) {
             return false;
         }
-        if (hasText(city) && (hotel.getAddress() == null || doesNotContainIgnoreCase(hotel.getAddress().getCity(), city))) {
+        if (city != null && !city.isBlank() && (hotel.getAddress() == null || doesNotContainIgnoreCase(hotel.getAddress().getCity(), city))) {
             return false;
         }
-        if (hasText(country)
+        if (country != null && !country.isBlank()
                 && (hotel.getAddress() == null || doesNotContainIgnoreCase(hotel.getAddress().getCountry(), country))) {
             return false;
         }
