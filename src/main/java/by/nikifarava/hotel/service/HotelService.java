@@ -12,6 +12,7 @@ import by.nikifarava.hotel.repository.HotelRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import static java.util.stream.Collectors.toSet;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class HotelService {
 
     private static final Set<String> HISTOGRAM_PARAMS = Set.of("brand", "city", "country", "amenities");
@@ -43,7 +45,7 @@ public class HotelService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Hotel not found"));
 
         if (amenities == null || amenities.isEmpty()) return;
-
+        log.info("Adding amenities of {}", amenities);
         amenities.stream()
                 .flatMap(name -> Arrays.stream(name.split(",")))
                 .map(String::trim)
@@ -67,6 +69,7 @@ public class HotelService {
     public Map<String, Long> getHistogram(String param) {
         String preparedParam = (param == null) ? "" : param.toLowerCase();
         if (!HISTOGRAM_PARAMS.contains(preparedParam)) {
+            log.info("No histogram found for {}", preparedParam);
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Unsupported histogram parameters. Allowed parameters: " + HISTOGRAM_PARAMS
@@ -126,6 +129,9 @@ public class HotelService {
         hotel.setArrivalTime(arrivalTime);
 
         Hotel savedHotel = hotelRepository.save(hotel);
+
+        log.info("Created hotel {}", savedHotel);
+
         return hotelMapper.toShortDto(savedHotel);
     }
 
@@ -156,6 +162,8 @@ public class HotelService {
         hotels = hotels.stream()
                 .filter(hotel -> matchesSearchFilters(hotel, name, brand, city, country, amenities))
                 .toList();
+        log.info("Found {} hotels", hotels.size());
+
         return hotelMapper.toShortDtoList(hotels);
     }
 
@@ -164,6 +172,7 @@ public class HotelService {
         Hotel hotel = hotelRepository.findDetailsById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Hotel not found"));
 
+        log.info("Found hotel {}", hotel);
         return hotelMapper.toDetailsDto(hotel);
     }
 
