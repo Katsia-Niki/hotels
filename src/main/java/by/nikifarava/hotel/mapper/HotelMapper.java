@@ -29,7 +29,7 @@ public class HotelMapper {
                 toContactDto(hotel.getContact()),
                 toArrivalTimeDto(hotel.getArrivalTime()),
                 hotel.getAmenities().stream()
-                        .map(Amenity::getName)
+                        .map(Amenity::getDisplayName)
                         .sorted()
                         .toList()
         );

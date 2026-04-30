@@ -196,14 +196,19 @@ databaseChangeLog:
                     primaryKey: true
                     primaryKeyName: pk_amenities
               - column:
-                  name: name
+                  name: name_to_lower_case
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_name
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
         - addUniqueConstraint:
             tableName: amenities
-            columnNames: name
-            constraintName: uk_amenities_name
+            columnNames: name_to_lower_case
+            constraintName: uk_amenities_name_to_lower_case
 
   - changeSet:
       id: 006-create-hotel-amenities

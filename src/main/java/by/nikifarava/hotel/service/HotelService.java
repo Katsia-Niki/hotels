@@ -46,21 +46,29 @@ public class HotelService {
 
         if (amenities == null || amenities.isEmpty()) return;
         log.info("Adding amenities of {}", amenities);
-        amenities.stream()
+        Map<String, String> nameToDisplay = amenities.stream()
                 .flatMap(name -> Arrays.stream(name.split(",")))
                 .map(String::trim)
                 .filter(name -> !name.isBlank())
-                .map(String::toLowerCase)
-                .distinct()
-                .forEach(name -> {
-                    Amenity amenity = amenityRepository.findByNameIgnoreCase(name)
-                            .orElseGet(() -> amenityRepository.save(Amenity.builder().name(name).build()));
+                .collect(Collectors.toMap(
+                        String::toLowerCase,
+                        name -> name,
+                        (existing, ignored) -> existing,
+                        LinkedHashMap::new
+                ));
 
-                    if (!hotel.getAmenities().contains(amenity)) {
-                        hotel.getAmenities().add(amenity);
-                        amenity.getHotels().add(hotel);
-                    }
-                });
+        nameToDisplay.forEach((nameToLowerCase, displayName) -> {
+            Amenity amenity = amenityRepository.findByNameToLowerCase(nameToLowerCase)
+                    .orElseGet(() -> amenityRepository.save(Amenity.builder()
+                            .nameToLowerCase(nameToLowerCase)
+                            .displayName(displayName)
+                            .build()));
+
+            if (!hotel.getAmenities().contains(amenity)) {
+                hotel.getAmenities().add(amenity);
+                amenity.getHotels().add(hotel);
+            }
+        });
 
         hotelRepository.save(hotel);
     }
@@ -236,7 +244,7 @@ public class HotelService {
         }
         if (!preparedAmenities.isEmpty()) {
             Set<String> hotelAmenities = hotel.getAmenities().stream()
-                    .map(a -> a.getName().toLowerCase())
+                    .map(Amenity::getNameToLowerCase)
                     .collect(toSet());
             return preparedAmenities.stream().anyMatch(hotelAmenities::contains);
         }

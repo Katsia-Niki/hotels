@@ -19,8 +19,11 @@ public class Amenity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String name;
+    @Column(name = "name_to_lower_case", nullable = false, unique = true, length = 255)
+    private String nameToLowerCase;
+
+    @Column(name = "display_name", nullable = false, length = 255)
+    private String displayName;
 
     @Builder.Default
     @ToString.Exclude

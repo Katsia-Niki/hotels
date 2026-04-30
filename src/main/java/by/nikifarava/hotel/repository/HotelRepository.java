@@ -42,7 +42,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long> {
             select distinct h
             from Hotel h
             join h.amenities a
-            where lower(a.name) in :amenityNames
+            where a.nameToLowerCase in :amenityNames
             """)
     List<Hotel> findDistinctByAmenityNames(Collection<String> amenityNames);
 }

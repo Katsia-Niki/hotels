@@ -103,16 +103,21 @@ class HotelServiceTest {
     @Test
     void addAmenities_shouldPrepareAndRemoveDeduplicateAmenities() {
         when(hotelRepository.findById(1L)).thenReturn(Optional.of(baseHotel));
-        when(amenityRepository.findByNameIgnoreCase("free wifi")).thenReturn(Optional.empty());
-        when(amenityRepository.findByNameIgnoreCase("fitness center")).thenReturn(Optional.of(
-                Amenity.builder().id(10L).name("fitness center").hotels(new HashSet<>()).build()
+        when(amenityRepository.findByNameToLowerCase("free wifi")).thenReturn(Optional.empty());
+        when(amenityRepository.findByNameToLowerCase("fitness center")).thenReturn(Optional.of(
+                Amenity.builder()
+                        .id(10L)
+                        .nameToLowerCase("fitness center")
+                        .displayName("Fitness center")
+                        .hotels(new HashSet<>())
+                        .build()
         ));
         when(amenityRepository.save(any(Amenity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         hotelService.addAmenities(1L, List.of(" Free WiFi ", "FREE WIFI", "fitness center"));
 
-        verify(amenityRepository).findByNameIgnoreCase("free wifi");
-        verify(amenityRepository).findByNameIgnoreCase("fitness center");
+        verify(amenityRepository).findByNameToLowerCase("free wifi");
+        verify(amenityRepository).findByNameToLowerCase("fitness center");
         verify(hotelRepository).save(baseHotel);
     }
 
@@ -143,7 +148,10 @@ class HotelServiceTest {
         HotelSearchRequestDto filter = new HotelSearchRequestDto();
         filter.setAmenities(List.of("Free WiFi"));
 
-        Amenity amenity = Amenity.builder().name("free wifi").build();
+        Amenity amenity = Amenity.builder()
+                .nameToLowerCase("free wifi")
+                .displayName("Free WiFi")
+                .build();
         baseHotel.setAmenities(Set.of(amenity));
         List<Hotel> found = List.of(baseHotel);
         List<HotelShortResponseDto> expected = List.of(baseShortDto);

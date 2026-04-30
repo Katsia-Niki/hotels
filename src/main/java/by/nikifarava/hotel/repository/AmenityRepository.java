@@ -9,13 +9,13 @@ import java.util.Optional;
 
 public interface AmenityRepository extends JpaRepository<Amenity, Long> {
 
-    Optional<Amenity> findByNameIgnoreCase(String name);
+    Optional<Amenity> findByNameToLowerCase(String nameToLowerCase);
 
     @Query("""
-            select a.name, count(h)
+            select a.displayName, count(h)
             from Amenity a
             left join a.hotels h
-            group by a.name
+            group by a.displayName
             """)
     List<Object[]> countByAmenityName();
 }
