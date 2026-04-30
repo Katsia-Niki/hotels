@@ -60,7 +60,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void createHotel_shouldSetDefaultArrivalTime_whenArrivalTimeMissing() {
+    void createHotelShouldSetDefaultArrivalTimeWhenArrivalTimeMissing() {
         CreateHotelRequestDto request = buildCreateRequest(null);
 
         when(hotelRepository.save(any(Hotel.class))).thenReturn(baseHotel);
@@ -73,7 +73,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void getHistogram_shouldReturnCountsForBrand() {
+    void getHistogramShouldReturnCountsForBrand() {
         when(hotelRepository.countByBrand())
                 .thenReturn(List.of(new Object[]{"Hilton", 2L}, new Object[]{"Marriott", 1L}));
 
@@ -84,14 +84,14 @@ class HotelServiceTest {
     }
 
     @Test
-    void getHistogram_shouldThrowBadRequest_whenParamUnsupported() {
+    void getHistogramShouldThrowBadRequestWhenParamUnsupported() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> hotelService.getHistogram("unknown"));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
-    void addAmenities_shouldThrowNotFound_whenHotelMissing() {
+    void addAmenitiesShouldThrowNotFoundWhenHotelMissing() {
         when(hotelRepository.findById(999L)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
@@ -101,7 +101,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void addAmenities_shouldPrepareAndRemoveDeduplicateAmenities() {
+    void addAmenitiesShouldPrepareAndRemoveDeduplicateAmenities() {
         when(hotelRepository.findById(1L)).thenReturn(Optional.of(baseHotel));
         when(amenityRepository.findByNameToLowerCase("free wifi")).thenReturn(Optional.empty());
         when(amenityRepository.findByNameToLowerCase("fitness center")).thenReturn(Optional.of(
@@ -112,7 +112,13 @@ class HotelServiceTest {
                         .hotels(new HashSet<>())
                         .build()
         ));
-        when(amenityRepository.save(any(Amenity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Amenity savedAmenity = Amenity.builder()
+                .id(11L)
+                .nameToLowerCase("free wifi")
+                .displayName("Free WiFi")
+                .hotels(new HashSet<>())
+                .build();
+        when(amenityRepository.save(any(Amenity.class))).thenReturn(savedAmenity);
 
         hotelService.addAmenities(1L, List.of(" Free WiFi ", "FREE WIFI", "fitness center"));
 
@@ -122,7 +128,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void addAmenities_shouldNotSaveHotel_whenAmenitiesEmpty() {
+    void addAmenitiesShouldNotSaveHotelWhenAmenitiesEmpty() {
         when(hotelRepository.findById(1L)).thenReturn(Optional.of(baseHotel));
 
         hotelService.addAmenities(1L, List.of());
@@ -131,7 +137,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void search_shouldReturnAll_whenArgumentIsNull() {
+    void searchShouldReturnAllWhenArgumentIsNull() {
         List<Hotel> hotels = List.of(baseHotel);
         List<HotelShortResponseDto> expected = List.of(baseShortDto);
 
@@ -144,7 +150,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void search_shouldFilterByAmenities() {
+    void searchShouldFilterByAmenities() {
         HotelSearchRequestDto filter = new HotelSearchRequestDto();
         filter.setAmenities(List.of("Free WiFi"));
 
@@ -165,7 +171,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void getHotelById_shouldThrowNotFound_whenMissing() {
+    void getHotelByIdShouldThrowNotFoundWhenMissing() {
         when(hotelRepository.findDetailsById(5L)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> hotelService.getHotelById(5L));
@@ -174,7 +180,7 @@ class HotelServiceTest {
     }
 
     @Test
-    void getHotelById_shouldReturnDetails_whenFound() {
+    void getHotelByIdShouldReturnDetailsWhenFound() {
         when(hotelRepository.findDetailsById(1L)).thenReturn(Optional.of(baseHotel));
         when(hotelMapper.toDetailsDto(baseHotel)).thenReturn(baseDetailsDto);
 
