@@ -23,7 +23,7 @@ class GlobalExceptionHandlerIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("Validation error returns standardized 400 response")
+    @DisplayName("status 400")
     void shouldReturnValidationErrorResponse() throws Exception {
         String invalidJson = """
                 {
@@ -57,7 +57,7 @@ class GlobalExceptionHandlerIntegrationTest {
     }
 
     @Test
-    @DisplayName("Malformed JSON returns standardized 400 response")
+    @DisplayName("status 400")
     void shouldReturnBadRequestForMalformedJson() throws Exception {
         String malformedJson = """
                 {"name":"x","brand":
@@ -73,7 +73,7 @@ class GlobalExceptionHandlerIntegrationTest {
     }
 
     @Test
-    @DisplayName("ResponseStatusException(NOT_FOUND) returns standardized 404 response")
+    @DisplayName("status 404")
     void shouldReturnNotFoundResponse() throws Exception {
         mockMvc.perform(get("/property-view/hotels/{id}", 999999L))
                 .andExpect(status().isNotFound())

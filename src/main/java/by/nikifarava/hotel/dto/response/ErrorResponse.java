@@ -1,10 +1,10 @@
 package by.nikifarava.hotel.dto.response;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public record ErrorResponse(
-        OffsetDateTime timestamp,
+        LocalDateTime timestamp,
         int status,
         String message,
         String path,
